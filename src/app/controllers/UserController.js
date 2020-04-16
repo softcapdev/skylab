@@ -1,5 +1,6 @@
 import * as Yup from 'yup';
 import User from '../models/User';
+import File from '../models/File';
 import alertMessages from '../../config/alertMessages';
 
 class UserController {
@@ -15,6 +16,7 @@ class UserController {
     });
 
     if (!(await schema.isValid(req.body))) {
+      console.log('entrou aqui user');
       return res.status(400).json({ error: alertMessages.ValidationFail });
     }
 
@@ -72,13 +74,23 @@ class UserController {
       return res.status(401).json({ error: alertMessages.PasswordMatch });
     }
 
-    const { id, name, provider } = await user.update(req.body);
+    await user.update(req.body);
+
+    const { id, name, avatar } = await User.findByPk(req.userId, {
+      include: [
+        {
+          model: File,
+          as: 'avatar',
+          attributes: ['id', 'path', 'url'],
+        },
+      ],
+    });
 
     return res.json({
       id,
       name,
       email,
-      provider,
+      avatar,
     });
   }
 }
